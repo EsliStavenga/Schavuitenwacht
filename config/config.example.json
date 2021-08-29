@@ -2,5 +2,6 @@
   "token": "<your token>",
   "prefix": "!",
   "bannedWords": [],
-   "replies": ["😇"]   
+   "replies": ["😇"],
+   "bannedUsers": []
 }

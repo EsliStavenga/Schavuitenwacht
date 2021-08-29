@@ -6,6 +6,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const visionUrl = "https://vision.googleapis.com/v1/images:annotate";
 const replies = config.replies || [];
+const bannedUsers = (config.bannedUsers || []).map(x => x.toString());
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -23,9 +24,10 @@ client.on('messageUpdate', (old, _new) => {
 });
 
 function fixWeeb(msg) {	
-    if(msg.author.bot) {
+/*    if(msg.author.bot) {
         return;
     }
+*/
 
     isWeeb(msg).then(res => {
         if(res) {
@@ -49,11 +51,7 @@ function isWeeb(msg) {
         const containsAsianCharacter = msgIsAsian(msg.content);
 		const containsBannedWord = msgHasBannedWord(msg.content);
 		
-//		if(msg.author.id == '332864901032706048') {
-				//resolve(true);
-		//}
-		
-        if(containsAsianCharacter || containsBannedWord) {
+        if(containsAsianCharacter || containsBannedWord || bannedUsers.indexOf(msg.author.id)) >= 0) {
             resolve(true);
         } else if(isYoutubeVideo(msg.content)) {
             youtubeVideoContainsWeebShit(msg.content).then(res => {
