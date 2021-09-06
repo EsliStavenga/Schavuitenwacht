@@ -1,7 +1,11 @@
 import {Bot} from "./Bot";
+import { Console } from "./CommandLine/Console";
 
-(new Bot()).listen().then(() => {
-    console.log('Logged in!');
+console = (new Console());
+
+const bot = new Bot();
+bot.loginEvent.then(() => {
+    console.info('Logged in');
 })
 
 /*
