@@ -9,7 +9,7 @@ export class Console
     private handleLogger = (method: string, ...messages: any[]): void =>
     {
         messages.forEach((message) => {
-            this.logPrefixedMessage(message.toString(), method);
+            this.logPrefixedMessage(message?.toString(), method);
         });
     }
 

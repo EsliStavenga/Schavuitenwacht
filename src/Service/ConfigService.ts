@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import './../Extension/ObjectExtension';
 
 export class ConfigService {
 
@@ -18,10 +19,9 @@ export class ConfigService {
         this.listenToConfigChanges();
     }
 
-    public getConfig(key: string, _default: any = ""): string
+    public getConfig(key: string, _default: any = undefined): string
     {
-        //TODO add multi level support
-        return this.config[key] || _default;
+        return this.config.getPropertyByPath(key, _default);
     }
 
     private readConfig(): void
@@ -30,7 +30,7 @@ export class ConfigService {
 
         try {
             // @ts-ignore rawData is Buffer but does work with JSON.parse https://stackabuse.com/reading-and-writing-json-files-with-node-js/
-            this.config = JSON.parse(rawData);
+            this.config = JSON.parse(rawData) as object;
         } catch(e) {
             console.error("Couldn't read config", e);
         }
