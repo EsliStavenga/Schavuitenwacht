@@ -1,12 +1,15 @@
 import {Bot} from "./Bot";
 import { Console } from "./CommandLine/Console";
+import {ConfigService} from "./Service/ConfigService";
+import {PresenceStatusData} from "discord.js";
 
 console = (new Console());
 
 const bot = new Bot();
 bot.loginEvent.then(() => {
-    console.info('Logged in');
-})
+    console.info(`Logged in as ${bot.username}`);
+    bot.setStatus(ConfigService.getConfig('activity.text'), ConfigService.getConfig('activity.status') as PresenceStatusData);
+});
 
 /*
 const { REST } = require('@discordjs/rest');

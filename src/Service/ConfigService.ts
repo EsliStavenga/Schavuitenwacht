@@ -4,7 +4,7 @@ import './../Extension/ObjectExtension';
 
 export class ConfigService {
 
-    public static readonly instance = new ConfigService('./config/config.json');
+    private static readonly instance = new ConfigService('./config/config.json');
     private readonly configFile: string;
     private config: JSON;
 
@@ -19,9 +19,9 @@ export class ConfigService {
         this.listenToConfigChanges();
     }
 
-    public getConfig(key: string, _default: any = undefined): string
+    public static getConfig(key: string, _default: any = undefined): string
     {
-        return this.config.getPropertyByPath(key, _default);
+        return this.instance.config.getPropertyByPath(key, _default);
     }
 
     private readConfig(): void
