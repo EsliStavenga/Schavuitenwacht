@@ -1,21 +1,33 @@
 const fs = require("fs");
 const request = require("request");
-const config = JSON.parse(fs.readFileSync("./config/config.json"));
+const configFile = './config/config.json';
+let config = JSON.parse(fs.readFileSync(configFile));
 const bannedMessages = config.bannedWords || [];
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const visionUrl = "https://vision.googleapis.com/v1/images:annotate";
-const replies = config.replies || {general: []};
-const bannedUsers = (config.bannedUsers || []).map(x => x.toString());
+let replies = config.replies || [];
+let bannedUsers = (config.bannedUsers || []).map(x => x.toString());
+let lastTime = (new Date()).getTime();
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    client.user.setStatus('dnd', "Goodbye my lover 💔");
 });
 
 // youtubeVideoContainsWeebShit("Guys check out it this awesome vid :joy: :joy: :joy:!!! https://www.youtube.com/watch?v=WIKqgE4BwAY").then((Res) => {
 //     console.log(Res);
 // });
 
+console.log("-".repeat(50));
+console.log((new Date()).toString());
+
+fs.watch(configFile, (_, filename) => {
+    console.log("Config file change detected");
+    config = JSON.parse(fs.readFileSync(configFile)); 
+    bannedUsers = config.bannedUsers || [];
+    replies = config.replies || [];
+});
 
 client.on('message', fixWeeb);
 
@@ -23,7 +35,7 @@ client.on('messageUpdate', (old, _new) => {
     fixWeeb(_new);
 });
 
-function fixWeeb(msg) {
+function fixWeeb(msg) {	
     if(msg.author.bot) {
         return;
     }
@@ -38,7 +50,13 @@ function fixWeeb(msg) {
                 wordList = replies[res.word];
             }
 
-            msg.reply(wordList[Math.floor(Math.random()*wordList.length)]);
+            let newTimeout = (new Date()).getTime();
+
+            if((lastTime + 60000) < newTimeout) {
+                msg.reply(wordList[Math.floor(Math.random()*wordList.length)]);
+            	lastTime = newTimeout;
+	    }
+
             msg.delete({
                 reason: "Ew japan shit"
             })
@@ -60,7 +78,7 @@ function isWeeb(msg, resolveYT = true) {
 
     return new Promise(resolve => {
         const containsAsianCharacter = msgIsAsian(msg.content);
-		    const containsBannedWord = msgHasBannedWord(msg.content);
+	const containsBannedWord = msgHasBannedWord(msg.content);
 		
         if(containsAsianCharacter !== undefined ||
           containsBannedWord !== undefined ||
