@@ -5,7 +5,7 @@ const bannedMessages = config.bannedWords || [];
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const visionUrl = "https://vision.googleapis.com/v1/images:annotate";
-const replies = config.replies || [];
+const replies = config.replies || {general: []};
 const bannedUsers = (config.bannedUsers || []).map(x => x.toString());
 
 client.on('ready', () => {
@@ -23,16 +23,22 @@ client.on('messageUpdate', (old, _new) => {
     fixWeeb(_new);
 });
 
-function fixWeeb(msg) {	
-/*    if(msg.author.bot) {
+function fixWeeb(msg) {
+    if(msg.author.bot) {
         return;
     }
-*/
 
     isWeeb(msg).then(res => {
-        if(res) {
+        if(res.result) {
             console.log(`Deleting message, content ${msg.content}`);
-            msg.reply(replies[Math.floor(Math.random()*replies.length)]);
+            let wordList = replies['general'];
+
+            //banned word specific replies
+            if(replies[res.word]) {
+                wordList = replies[res.word];
+            }
+
+            msg.reply(wordList[Math.floor(Math.random()*wordList.length)]);
             msg.delete({
                 reason: "Ew japan shit"
             })
@@ -44,33 +50,46 @@ function fixWeeb(msg) {
 
 client.login(config.token);
 
-
-function isWeeb(msg) {
+/**
+ *
+ * @param {{content: string}} msg
+ * @param {boolean} resolveYT Whether to resolve youtube vids or not
+ * @return {Promise<{result: boolean, word: string}>}
+ */
+function isWeeb(msg, resolveYT = true) {
 
     return new Promise(resolve => {
         const containsAsianCharacter = msgIsAsian(msg.content);
-		const containsBannedWord = msgHasBannedWord(msg.content);
+		    const containsBannedWord = msgHasBannedWord(msg.content);
 		
-        if(containsAsianCharacter || containsBannedWord || bannedUsers.indexOf(msg.author.id)) >= 0) {
-            resolve(true);
-        } else if(isYoutubeVideo(msg.content)) {
+        if(containsAsianCharacter !== undefined ||
+          containsBannedWord !== undefined ||
+          bannedUsers.indexOf(msg.author.id) >= 0
+        ) {
+            resolve({
+                result: true,
+                word: containsAsianCharacter || containsBannedWord
+            });
+        } else if(resolveYT && isYoutubeVideo(msg.content)) {
             youtubeVideoContainsWeebShit(msg.content).then(res => {
                 resolve(res);
             });
         } else {
-            resolve(false);
+            resolve({
+                result: false
+            });
         }
-    });
+    })
 }
 
 function msgHasBannedWord(str) {
 	for(const s of str.toLowerCase().split(' ')) {		
 		if(bannedMessages.indexOf(s) >= 0) {
-			return true;
+			return s;
 		}
 	}
 	
-	return false;
+	return undefined;
 }
 
 function youtubeVideoContainsWeebShit(str) {
@@ -87,7 +106,7 @@ function youtubeVideoContainsWeebShit(str) {
         }
 
         if(id === undefined || id === '') {
-            resolve(false);
+            resolve({result: false});
         }
 
         //only get stuff to ampersand
@@ -102,7 +121,7 @@ function youtubeVideoContainsWeebShit(str) {
         }
 
         if(id === '') {
-            resolve(false);
+            resolve({result: false});
         }
 
         new Promise((resolve, reject) => {
@@ -120,10 +139,12 @@ function youtubeVideoContainsWeebShit(str) {
             //
             // }
 
-            resolve(msgIsAsian(json.title));
+            resolve(isWeeb({
+                content: json.title
+            }, false));
 
         }).catch((err) => {
-            resolve(false);
+            resolve({result: false});
         });
 
     })
@@ -170,5 +191,9 @@ function matchYoutubeShortLinkRegex(str) {
 }
 
 function msgIsAsian(str) {
-    return str.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/) !== null
+    if(str.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/) !== null) {
+        return str;
+    }
+
+    return undefined;
 }
